@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>現場チェッカーAR - 高さ制限クリアランス</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --dark: #2c3e50;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: var(--dark); padding: 15px; display: flex; flex-direction: column; height: 100vh; }
+        
+        header { background: var(--primary); color: white; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.0rem; }
+
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card h3 { font-size: 0.95rem; color: var(--primary); margin-bottom: 8px; }
+        .card p { font-size: 0.8rem; color: #555; line-height: 1.4; margin-bottom: 10px; }
+
+        .ar-launch-btn { display: block; width: 100%; background: var(--success); color: white; text-align: center; padding: 18px; border-radius: 8px; font-size: 1.05rem; font-weight: bold; text-decoration: none; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); }
+        
+        .height-legend { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; font-size: 0.8rem; font-weight: bold; }
+        .legend-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 4px; color: white; }
+        .bg-38 { background: #27ae60; }
+        .bg-41 { background: #f39c12; }
+        .bg-43 { background: #e74c3c; }
+
+        .instruction { background: #e0f2fe; border-left: 4px solid var(--secondary); padding: 10px; font-size: 0.8rem; border-radius: 4px; line-height: 1.4; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📐 現場チェッカーAR</h1>
+    </header>
+
+    <div class="card">
+        <h3>高さ制限バリア（3段階表示）</h3>
+        <p>上空の電線や障害物とのクリアランスを、3段階の数値付き天井バリアで一括検証します。</p>
+        
+        <div class="height-legend">
+            <div class="legend-item bg-38">🟢 3.8m ： 一般道制限</div>
+            <div class="legend-item bg-41">🟡 4.1m ： 高さ指定道路</div>
+            <div class="legend-item bg-43">🔴 4.3m ： 特殊車両許可（最大）</div>
+        </div>
+    </div>
+
+    <div class="card" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+        <h3 style="margin-bottom: 10px;">現地ARシミュレーション</h3>
+        <p style="margin-bottom: 15px;">下のボタンを押すとiPhoneの標準ARが起動し、3.8m / 4.1m / 4.3m の3本の高さバリアが一度に実寸表示されます。</p>
+        
+        <!-- iPhone Quick Look 起動アンカー -->
+        <a id="ar-link" rel="ar" href="./models/height_barriers.usdz" class="ar-launch-btn">
+            🚀 3段階 高さ制限ARを起動する
+        </a>
+
+        <div class="instruction">
+            <b>💡 使い方：</b><br>
+            ① ボタンを押してカメラが起動したら、道路や足元の地面をゆっくり照らします。<br>
+            ② 自動で地面が認識され、上空3.8m・4.1m・4.3mの高さに数値付きの面が出現します。
+        </div>
+    </div>
+</body>
+</html>
