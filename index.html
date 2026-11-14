@@ -3,65 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>現場チェッカーAR - 高さ制限クリアランス</title>
+    <title>現場チェッカーAR - クリアランス・重機車両シミュレーション</title>
     <style>
         :root {
-            --primary: #2c3e50;
-            --secondary: #3498db;
-            --success: #27ae60;
-            --dark: #2c3e50;
+            --primary: #1e293b;
+            --secondary: #0284c7;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; color: var(--dark); padding: 15px; display: flex; flex-direction: column; height: 100vh; }
-        
-        header { background: var(--primary); color: white; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        header h1 { font-size: 1.0rem; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 12px 14px 28px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
-        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card h3 { font-size: 0.95rem; color: var(--primary); margin-bottom: 8px; }
-        .card p { font-size: 0.8rem; color: #555; line-height: 1.4; margin-bottom: 10px; }
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+        }
+        header h1 { font-size: 1.05rem; letter-spacing: 0.02em; }
+        .badge-count {
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
 
-        .ar-launch-btn { display: block; width: 100%; background: var(--success); color: white; text-align: center; padding: 18px; border-radius: 8px; font-size: 1.05rem; font-weight: bold; text-decoration: none; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); }
-        
-        .height-legend { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; font-size: 0.8rem; font-weight: bold; }
-        .legend-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 4px; color: white; }
-        .bg-38 { background: #27ae60; }
-        .bg-41 { background: #f39c12; }
-        .bg-43 { background: #e74c3c; }
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 10px;
+        }
+        .tab-btn {
+            border: none;
+            background: transparent;
+            padding: 9px 4px;
+            border-radius: 7px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .tab-btn.active {
+            background: var(--card);
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
 
-        .instruction { background: #e0f2fe; border-left: 4px solid var(--secondary); padding: 10px; font-size: 0.8rem; border-radius: 4px; line-height: 1.4; margin-top: 15px; }
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .card-header h3 { font-size: 0.92rem; color: var(--primary); }
+        .card-header span { font-size: 0.75rem; color: var(--muted); }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            max-height: 44vh;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+        .model-item {
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 11px 12px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            cursor: pointer;
+            background: #fff;
+            transition: border-color 0.15s, background-color 0.15s;
+            text-align: left;
+            width: 100%;
+        }
+        .model-item.selected {
+            border-color: var(--secondary);
+            background: #f0f9ff;
+        }
+        .model-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            background: #f1f5f9;
+        }
+        .model-item.selected .model-icon {
+            background: #bae6fd;
+        }
+        .model-info { flex: 1; min-width: 0; }
+        .model-title-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 3px;
+        }
+        .model-name {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tag {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .tag-height { background: #dcfce7; color: #166534; }
+        .tag-vehicle { background: #dbeafe; color: #1e40af; }
+        .tag-crane { background: #fef3c7; color: #92400e; }
+        .tag-other { background: #f3e8ff; color: #6b21a8; }
+
+        .model-desc {
+            font-size: 0.76rem;
+            color: var(--muted);
+            line-height: 1.35;
+        }
+        .radio-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .model-item.selected .radio-dot {
+            border-color: var(--secondary);
+        }
+        .model-item.selected .radio-dot::after {
+            content: "";
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--secondary);
+        }
+
+        /* 選択中プレビュー & 起動エリア */
+        .launch-card {
+            margin-top: auto;
+            border: 1px solid #cbd5e1;
+        }
+        .selected-summary {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+        }
+        .selected-label {
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .selected-value {
+            font-size: 0.98rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .selected-sub {
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 3px;
+        }
+
+        .height-legend {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .height-legend.visible { display: flex; }
+        .legend-item { padding: 4px 8px; border-radius: 4px; color: white; }
+        .bg-38 { background: #16a34a; }
+        .bg-41 { background: #d97706; }
+        .bg-43 { background: #dc2626; }
+
+        .ar-launch-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            background: var(--success);
+            color: white;
+            text-align: center;
+            padding: 16px;
+            border-radius: 10px;
+            font-size: 1.02rem;
+            font-weight: 800;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+        }
+        .ar-launch-btn:active {
+            transform: scale(0.99);
+            opacity: 0.92;
+        }
+
+        .instruction {
+            background: #e0f2fe;
+            border-left: 4px solid var(--secondary);
+            padding: 9px 11px;
+            font-size: 0.76rem;
+            border-radius: 6px;
+            line-height: 1.45;
+            margin-top: 12px;
+            color: #0f172a;
+        }
+        .status-note {
+            font-size: 0.72rem;
+            color: var(--muted);
+            text-align: center;
+            margin-top: 6px;
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>📐 現場チェッカーAR</h1>
+        <span class="badge-count" id="model-count">読込中...</span>
     </header>
 
-    <div class="card">
-        <h3>高さ制限バリア（3段階表示）</h3>
-        <p>上空の電線や障害物とのクリアランスを、3段階の数値付き天井バリアで一括検証します。</p>
-        
-        <div class="height-legend">
-            <div class="legend-item bg-38">🟢 3.8m ： 一般道制限</div>
-            <div class="legend-item bg-41">🟡 4.1m ： 高さ指定道路</div>
-            <div class="legend-item bg-43">🔴 4.3m ： 特殊車両許可（最大）</div>
-        </div>
+    <!-- カテゴリ切替タブ -->
+    <div class="tabs" role="tablist">
+        <button class="tab-btn active" data-filter="all">すべて</button>
+        <button class="tab-btn" data-filter="vehicle">重機・車両</button>
+        <button class="tab-btn" data-filter="height">高さ制限</button>
     </div>
 
-    <div class="card" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-        <h3 style="margin-bottom: 10px;">現地ARシミュレーション</h3>
-        <p style="margin-bottom: 15px;">下のボタンを押すとiPhoneの標準ARが起動し、3.8m / 4.1m / 4.3m の3本の高さバリアが一度に実寸表示されます。</p>
-        
-        <!-- iPhone Quick Look 起動アンカー -->
-        <a id="ar-link" rel="ar" href="./models/height_limit_lines.usdz" class="ar-launch-btn">
-           🚀 高さ制限ARを起動する
+    <!-- モデル選択リスト -->
+    <div class="card">
+        <div class="card-header">
+            <h3>表示するARオブジェクトを選択</h3>
+            <span id="filter-label">全モデル表示</span>
+        </div>
+        <div class="model-grid" id="model-list"></div>
+    </div>
+
+    <!-- AR起動パネル -->
+    <div class="card launch-card">
+        <div class="selected-summary">
+            <div class="selected-label">選択中のARモデル</div>
+            <div class="selected-value" id="sel-name">-</div>
+            <div class="selected-sub" id="sel-desc">-</div>
+            <div class="height-legend" id="height-legend">
+                <div class="legend-item bg-38">🟢 3.8m ： 一般道制限</div>
+                <div class="legend-item bg-41">🟡 4.1m ： 高さ指定道路</div>
+                <div class="legend-item bg-43">🔴 4.3m ： 特殊車両許可（最大）</div>
+            </div>
+        </div>
+
+        <!-- iPhone Quick Look 起動アンカー（rel="ar" は <a> タグ直下に置くのがApple公式仕様） -->
+        <a id="ar-link" rel="ar" href="./models/height_barriers.usdz" class="ar-launch-btn">
+            <img src="" alt="" style="display:none;">
+            <span id="ar-btn-text">🚀 選択したARを起動する</span>
         </a>
 
         <div class="instruction">
-            <b>💡 使い方：</b><br>
-            ① ボタンを押してカメラが起動したら、道路や足元の地面をゆっくり照らします。<br>
-            ② 自動で地面が認識され、上空3.8m・4.1m・4.3mの高さに数値付きの面が出現します。
+            <b>💡 現場での使い方：</b><br>
+            ① 上のリストから確認したい<b>高さ制限</b>または<b>重機・車両</b>を選択します。<br>
+            ② 「ARを起動する」を押し、カメラで道路や地面をゆっくり映すと実寸大で配置されます（2本指で回転・移動可能）。
         </div>
+        <div class="status-note" id="sync-status"></div>
     </div>
+
+    <!-- 外部設定ファイル（models_list.js）があれば自動読み込み -->
+    <script src="./models/models_list.js"></script>
+    <script>
+        /**
+         * 基本リスト（models/models_list.js が読み込まれた場合はそちらと自動統合されます）
+         */
+        const DEFAULT_MODELS = [
+            {
+                id: "height_barriers",
+                file: "height_barriers.usdz",
+                name: "3段階 高さ制限バリア (3.8m / 4.1m / 4.3m)",
+                category: "height",
+                icon: "🚧",
+                desc: "上空の電線・桁下とのクリアランスを3段階の天井ラインで一括確認",
+                isHeightGuide: true
+            },
+            {
+                id: "rafter_25t",
+                file: "25t_rafter_crane.usdz",
+                name: "25t ラフタークレーン",
+                category: "vehicle",
+                icon: "🏗️",
+                desc: "全長 約11.3m × 全幅 約2.62m × 全高 約3.48m（進入・据付スペース確認用）"
+            },
+            {
+                id: "truck_10t",
+                file: "10t_truck.usdz",
+                name: "10t トラック（大型ダンプ・平ボディ）",
+                category: "vehicle",
+                icon: "🚛",
+                desc: "全長 約11.9m × 全幅 約2.49m × 全高 約3.4m〜3.7m"
+            },
+            {
+                id: "trailer_30t",
+                file: "30t_lowboy_trailer.usdz",
+                name: "30t 低床トレーラー（重機運搬用）",
+                category: "vehicle",
+                icon: "🚚",
+                desc: "全長 約14.7m〜16.5m × 全幅 約2.6m〜2.99m（内輪差・搬入経路確認用）"
+            },
+            {
+                id: "trailer_20t",
+                file: "20t_trailer.usdz",
+                name: "20t トレーラー（セミトレーラー）",
+                category: "vehicle",
+                icon: "🚚",
+                desc: "全長 約13.5m〜15.0m × 全幅 約2.49m（旋回・駐車枠確認用）"
+            }
+        ];
+
+        let catalog = [];
+        let currentFilter = "all";
+        let selectedFile = "";
+
+        // ファイル名から表示名・アイコン・カテゴリを自動推測するヘルパー
+        function inferMetadataFromFilename(filename) {
+            const lower = filename.toLowerCase();
+            const base = filename.replace(/\.usdz$/i, "").replace(/[_-]+/g, " ");
+            let category = "vehicle";
+            let icon = "🚜";
+            let isHeight = false;
+
+            if (lower.includes("height") || lower.includes("barrier") || lower.includes("limit") || filename.includes("高さ")) {
+                category = "height";
+                icon = "🚧";
+                isHeight = true;
+            } else if (lower.includes("crane") || lower.includes("rafter") || filename.includes("クレーン") || filename.includes("ラフター")) {
+                category = "vehicle";
+                icon = "🏗️";
+            } else if (lower.includes("trailer") || filename.includes("トレーラー")) {
+                category = "vehicle";
+                icon = "🚚";
+            } else if (lower.includes("truck") || lower.includes("dump") || filename.includes("トラック") || filename.includes("ダンプ")) {
+                category = "vehicle";
+                icon = "🚛";
+            }
+
+            return {
+                id: filename,
+                file: filename,
+                name: base,
+                category: category,
+                icon: icon,
+                desc: `models/${filename}（実寸ARモデル）`,
+                isHeightGuide: isHeight
+            };
+        }
+
+        // 1) 静的カタログ（DEFAULT_MODELS + window.CUSTOM_MODELS）の統合
+        function buildInitialCatalog() {
+            const map = new Map();
+            DEFAULT_MODELS.forEach(item => map.set(item.file, item));
+            if (Array.isArray(window.CUSTOM_MODELS)) {
+                window.CUSTOM_MODELS.forEach(item => {
+                    if (typeof item === "string") {
+                        if (!map.has(item)) map.set(item, inferMetadataFromFilename(item));
+                    } else if (item && item.file) {
+                        const existing = map.get(item.file) || inferMetadataFromFilename(item.file);
+                        map.set(item.file, { ...existing, ...item });
+                    }
+                });
+            }
+            return Array.from(map.values());
+        }
+
+        // 2) models/ フォルダ内の .usdz 自動スキャン（Webサーバーがディレクトリ一覧を返す場合 & models.json に対応）
+        async function autoDiscoverModels() {
+            let discovered = 0;
+
+            // パターンA: models/models.json が置かれている場合
+            try {
+                const resJson = await fetch("./models/models.json", { cache: "no-store" });
+                if (resJson.ok) {
+                    const list = await resJson.json();
+                    if (Array.isArray(list)) {
+                        list.forEach(entry => {
+                            const item = typeof entry === "string" ? inferMetadataFromFilename(entry) : entry;
+                            if (item && item.file && item.file.toLowerCase().endsWith(".usdz")) {
+                                const idx = catalog.findIndex(m => m.file === item.file);
+                                if (idx >= 0) {
+                                    catalog[idx] = { ...catalog[idx], ...item };
+                                } else {
+                                    catalog.push(item);
+                                    discovered++;
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (e) {}
+
+            // パターンB: ローカルサーバー / Apache / Nginx / Python http.server 等で ./models/ のディレクトリ一覧HTMLが取得できる場合
+            try {
+                const resDir = await fetch("./models/", { cache: "no-store" });
+                if (resDir.ok) {
+                    const contentType = resDir.headers.get("content-type") || "";
+                    if (contentType.includes("text/html")) {
+                        const html = await resDir.text();
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, "text/html");
+                        const links = Array.from(doc.querySelectorAll("a"));
+                        links.forEach(a => {
+                            const href = decodeURIComponent(a.getAttribute("href") || "");
+                            const cleanName = href.split("/").pop().split("?")[0];
+                            if (cleanName && cleanName.toLowerCase().endsWith(".usdz")) {
+                                if (!catalog.some(m => m.file === cleanName)) {
+                                    catalog.push(inferMetadataFromFilename(cleanName));
+                                    discovered++;
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (e) {}
+
+            if (discovered > 0) {
+                document.getElementById("sync-status").textContent = `modelsフォルダから ${discovered} 件のUSDZを自動検出しました`;
+                renderList();
+            }
+        }
+
+        function selectModel(file) {
+            selectedFile = file;
+            const item = catalog.find(m => m.file === file) || catalog[0];
+            if (!item) return;
+
+            document.getElementById("sel-name").textContent = `${item.icon} ${item.name}`;
+            document.getElementById("sel-desc").textContent = item.desc || "";
+
+            const legend = document.getElementById("height-legend");
+            if (item.isHeightGuide || item.category === "height") {
+                legend.classList.add("visible");
+            } else {
+                legend.classList.remove("visible");
+            }
+
+            // AR Quick Look リンクを更新
+            const arLink = document.getElementById("ar-link");
+            arLink.setAttribute("href", `./models/${encodeURIComponent(item.file)}`);
+            document.getElementById("ar-btn-text").textContent = `🚀 「${item.name.split("（")[0].split("(")[0].trim()}」をAR表示`;
+
+            renderList();
+        }
+
+        function renderList() {
+            const listEl = document.getElementById("model-list");
+            const filtered = catalog.filter(item => {
+                if (currentFilter === "all") return true;
+                return item.category === currentFilter;
+            });
+
+            document.getElementById("model-count").textContent = `登録数: ${catalog.length}件`;
+            listEl.innerHTML = "";
+
+            filtered.forEach(item => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "model-item" + (item.file === selectedFile ? " selected" : "");
+                btn.onclick = () => selectModel(item.file);
+
+                const tagClass = item.category === "height" ? "tag-height" : "tag-vehicle";
+                const tagText = item.category === "height" ? "高さ制限" : "重機・車両";
+
+                btn.innerHTML = `
+                    <div class="model-icon">${item.icon || "📦"}</div>
+                    <div class="model-info">
+                        <div class="model-title-row">
+                            <span class="model-name">${item.name}</span>
+                            <span class="tag ${tagClass}">${tagText}</span>
+                        </div>
+                        <div class="model-desc">${item.desc || item.file}</div>
+                    </div>
+                    <div class="radio-dot"></div>
+                `;
+                listEl.appendChild(btn);
+            });
+        }
+
+        // タブ切替イベント
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentFilter = btn.dataset.filter;
+                const labels = { all: "全モデル表示", vehicle: "重機・車両のみ", height: "高さ制限のみ" };
+                document.getElementById("filter-label").textContent = labels[currentFilter] || "";
+                renderList();
+            });
+        });
+
+        // 初期化実行
+        (async function init() {
+            catalog = buildInitialCatalog();
+            if (catalog.length > 0) {
+                selectModel(catalog[0].file);
+            }
+            await autoDiscoverModels();
+        })();
+    </script>
 </body>
 </html>
