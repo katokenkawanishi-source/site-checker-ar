@@ -9,6 +9,6 @@
  * 例2（ファイル名だけ簡単追加）:
  *   "backhoe_07.usdz",
  */
-window.CUSTOM_MODELS = [
+window.CUSTOM_MODELS = [ﾊﾟﾜｰﾌﾞﾚﾝﾀﾞｰ0.8
     // ここに追加したいUSDZファイル名を書き足してください
 ];
