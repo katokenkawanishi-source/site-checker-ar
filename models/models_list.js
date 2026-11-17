@@ -9,4 +9,4 @@
  * 例2（ファイル名だけ簡単追加）:
  *   "backhoe_07.usdz",
  */
-window.CUSTOM_MODELS = file:"ブレンダー.usdz"
+window.CUSTOM_MODELS = {file:"ブレンダー.usdz"};
